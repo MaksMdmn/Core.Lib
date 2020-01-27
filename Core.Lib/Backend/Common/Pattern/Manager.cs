@@ -2,18 +2,17 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Core.Lib.Common;
+using Core.Lib.Backend.Common.Abstract.Interfaces;
+using Core.Lib.Backend.Common.Pattern;
 using NLog;
-using Utils;
 
 namespace Core.Lib.Management
 {
     public abstract class Manager<TManager, TManagedItem> : Singleton<TManager>, 
                                                             IManager<TManagedItem, object>,
-                                                            IEnumerable<TManagedItem>,
-                                                            ILowCoupledElement
+                                                            IEnumerable<TManagedItem>
                                                             where TManager : class, new()
-                                                            where TManagedItem : IUniqueKey<string>
+                                                            where TManagedItem : IUnique<string>
     {
         //TODO: standart error hadnling here? new entity? how to work?
 
@@ -28,6 +27,8 @@ namespace Core.Lib.Management
             Items = new ConcurrentDictionary<object, TManagedItem>();
         }
 
+        public virtual void Initialize() { }
+
         public TManagedItem this[object key]
         {
             get
@@ -37,16 +38,9 @@ namespace Core.Lib.Management
                     return result;
                 }
 
-                return default(TManagedItem);
+                return default;
             }
         }
-
-        public virtual void Initialize()
-        {
-
-        }
-
-        public virtual void Reset() { }
 
         public virtual object AddItem(TManagedItem item)
         {
@@ -89,7 +83,7 @@ namespace Core.Lib.Management
 
         protected virtual object RetrieveItemKey(TManagedItem item)
         {
-            return item.Uid ?? GuidGenerator.GenerateStringGuid();
+            return item.Uid ?? Guid.NewGuid().ToString();
         }
 
 

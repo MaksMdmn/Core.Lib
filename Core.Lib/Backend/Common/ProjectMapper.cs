@@ -144,7 +144,7 @@ namespace Core.Lib.Backend.Common
                     _logger.LogAutoMapperAttempt(sourceType, typeof(TDestination));
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 //NOP
             }

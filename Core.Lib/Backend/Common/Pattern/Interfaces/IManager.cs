@@ -1,8 +1,6 @@
-﻿using Core.Lib.Common;
-
-namespace Core.Lib.Management
+﻿namespace Core.Lib.Management
 {
-    public interface IManager<TManagedItem, TKey> : IInitialize, IReset
+    public interface IManager<TManagedItem, TKey>
     {
         TManagedItem this[TKey key] { get; }
 
