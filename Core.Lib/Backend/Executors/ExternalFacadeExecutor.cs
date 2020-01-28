@@ -21,38 +21,94 @@ namespace Core.Lib.Backend.Executors
 
         }
 
-        public ExternalExecution PrepareExecution(Action facadeAction, EExecutionType executionType, bool supportCancel = false)
-            => PrepareExecution<Progress>(facadeAction, executionType, supportCancel);
 
-        public ExternalExecution PrepareExecution<TReturnType>(Func<TReturnType> facadeFunc, EExecutionType executionType, bool supportCancel = false) where TReturnType : DtoBase
-            => PrepareExecution<Progress, TReturnType>(facadeFunc, executionType, supportCancel);
-
-        public ExternalExecution PrepareExecution<TProgress>(Action facadeAction, EExecutionType executionType, bool supportCancel = false) 
-            where TProgress : IProgress, new()
+        public ExternalExecution PrepareExecution(Action facadeMethod, EExecutionType executionType)
         {
-            return PrepareExecution<TProgress, DtoBase>(
-                () => { facadeAction.Invoke(); return default; },
-                executionType,
-                supportCancel
+            return PrepareExecution<Progress, DtoBase>(
+                (p, ct) => { facadeMethod.Invoke(); return null; },
+                executionType
                 );
         }
 
-        public ExternalExecution PrepareExecution<TProgress, TReturnType>(Func<TReturnType> facadeFunc, EExecutionType executionType, bool supportCancel = false)
+        public ExternalExecution PrepareExecution<TReturnType>(Func<TReturnType> facadeMethod, EExecutionType executionType)
+            where TReturnType : DtoBase
+        {
+            return PrepareExecution<Progress, TReturnType>(
+                (p, ct) => facadeMethod.Invoke(),
+                executionType
+                );
+
+        }
+
+        public ExternalExecution PrepareExecution<TProgress>(Action<TProgress> facadeMethod, EExecutionType executionType)
+            where TProgress : IProgress, new()
+        {
+            return PrepareExecution<TProgress, DtoBase>(
+                (p, ct) => { facadeMethod.Invoke(p); return null; },
+                executionType
+                );
+        }
+
+        public ExternalExecution PrepareExecution<TProgress, TReturnType>(Func<TProgress, TReturnType> facadeMethod, EExecutionType executionType)
             where TProgress : IProgress, new()
             where TReturnType : DtoBase
         {
+            return PrepareExecution<TProgress, TReturnType>(
+                (p, ct) => facadeMethod.Invoke(p),
+                executionType
+                );
+        }
+
+        public ExternalExecution PrepareExecution(Action<CancellationToken?> facadeMethod, EExecutionType executionType)
+        {
+            return PrepareExecution<Progress, DtoBase>(
+                    (p, ct) => { facadeMethod.Invoke(ct); return null; },
+                    executionType
+                    );
+        }
+
+        public ExternalExecution PrepareExecution<TReturnType>(Func<CancellationToken?, TReturnType> facadeMethod, EExecutionType executionType)
+            where TReturnType : DtoBase
+        {
+            return PrepareExecution<Progress, TReturnType>(
+                (p, ct) => facadeMethod.Invoke(ct),
+                executionType
+                );
+
+        }
+
+            public ExternalExecution PrepareExecution<TProgress>(Action<TProgress, CancellationToken?> facadeMethod, EExecutionType executionType)
+            where TProgress : IProgress, new()
+        {
+            return PrepareExecution<TProgress, DtoBase>(
+                    (p, ct) => { facadeMethod.Invoke(p, ct); return null; },
+                    executionType
+                    );
+        }
+
+        public ExternalExecution PrepareExecution<TProgress, TReturnType>(Func<TProgress, CancellationToken?, TReturnType> facadeMethod, EExecutionType executionType)
+            where TProgress : IProgress, new()
+            where TReturnType : DtoBase
+        {
+            string executionUid = Guid.NewGuid().ToString();
+
+            TProgress progress = new TProgress();
+
+            CancellationToken? token = new CancellationToken();
+
             ExternalExecution execution = ExternalExecution.Create(
-                facadeFunc,
+                facadeMethod,
                 executionType,
-                Guid.NewGuid().ToString()
+                progress,
+                token,
+                executionUid
                 );
 
             _executionContexts.TryAdd(
-                execution.Uid,
-                supportCancel
-                    ? new ExternalExecutionContext(execution) { Progress = new TProgress(), Token = new CancellationToken() }
-                    : new ExternalExecutionContext(execution) { Progress = new TProgress() }
-                    );
+                executionUid,
+                new ExternalExecutionContext(execution) { Progress = progress, Token = token }
+                );
+
 
             return execution;
         }

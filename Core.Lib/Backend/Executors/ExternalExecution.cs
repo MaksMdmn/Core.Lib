@@ -1,24 +1,27 @@
-﻿using Core.Lib.Backend.Executors.Interfaces;
+﻿using Core.Lib.Backend.Common.Abstract;
+using Core.Lib.Backend.Executors.Interfaces;
+using Core.Lib.Backend.Progressing;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace Core.Lib.Backend.Executors
 {
     public class ExternalExecution : IFacadeExecution
     {
-        public static ExternalExecution Create(Action facadeMethod, EExecutionType executionType, string uid = null)
-        {
-            return Create(
-                () => { facadeMethod.Invoke(); return null; },
-                executionType,
-                uid
-                );
-        }
+        public static ExternalExecution Create<TProgress, TReturnType>(
+            Func<TProgress, CancellationToken?, TReturnType> facadeMethod, 
+            EExecutionType executionType,
+            TProgress progress,
+            CancellationToken? token,
+            string uid = null
+            )
+            where TProgress : IProgress, new()
+            where TReturnType : DtoBase
 
-        public static ExternalExecution Create(Func<object> facadeMethod, EExecutionType executionType, string uid = null)
         {
-            return new ExternalExecution(facadeMethod, executionType, uid);
+            return new ExternalExecution(() => facadeMethod.Invoke(progress, token), executionType, uid);
         }
 
         private ExternalExecution(Func<object> facadeMethod, EExecutionType executionType, string uid = null)
