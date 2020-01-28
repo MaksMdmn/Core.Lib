@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Core.Lib.Backend.Storage
+namespace Core.Lib.Backend.Storage.Interfaces
 {
     public interface IDBConfiguration : IConfiguration
     {

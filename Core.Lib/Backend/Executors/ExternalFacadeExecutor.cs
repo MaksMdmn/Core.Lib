@@ -15,12 +15,10 @@ namespace Core.Lib.Backend.Executors
     {
         private ConcurrentDictionary<string, ExternalExecutionContext> _executionContexts;
 
-
         protected ExternalFacadeExecutor()
         {
 
         }
-
 
         public ExternalExecution PrepareExecution(Action facadeMethod, EExecutionType executionType)
         {

@@ -35,12 +35,11 @@ namespace Core.Lib.Backend.Common
                     );
             }
 
-            task.Progress = progress ?? new Progress();
+            bool useDefaultProgress = progress == null;
 
-            //
-            // If user did not set any Progress, use default
-            //
-            if (progress == null)
+            task.Progress = useDefaultProgress ? new Progress() : progress;
+
+            if (useDefaultProgress)
             {
                 task
                     .WhenStarted(() => task.Progress.Progressing(0))
